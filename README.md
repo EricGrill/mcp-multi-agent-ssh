@@ -1,14 +1,31 @@
-# MCP Multi-Agent SSH
+<p align="center">
+  <h1 align="center">MCP Multi-Agent SSH</h1>
+  <p align="center">
+    <strong>Stateful SSH connections for Claude Code via MCP</strong>
+  </p>
+  <p align="center">
+    <a href="https://github.com/EricGrill/mcp-multi-agent-ssh/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+    <img src="https://img.shields.io/badge/python-3.10+-green.svg" alt="Python 3.10+">
+    <img src="https://img.shields.io/badge/tools-10-purple.svg" alt="10 Tools">
+    <img src="https://img.shields.io/badge/MCP-compatible-orange.svg" alt="MCP Compatible">
+  </p>
+  <p align="center">
+    <a href="#-quick-start">Quick Start</a> |
+    <a href="#-tools">Tools</a> |
+    <a href="#-examples">Examples</a> |
+    <a href="#-security">Security</a>
+  </p>
+</p>
 
-Stateful SSH connections for Claude Code via MCP (Model Context Protocol).
+---
 
-## Features
+## What is this?
 
-- **Persistent Connections**: SSH connections stay open for 10 minutes of inactivity, eliminating reconnection overhead
-- **Encrypted Credential Storage**: Credentials stored per-host with AES-256-GCM encryption
-- **Auto-Reconnect**: Transparently reconnects when connections expire or drop
-- **SFTP Support**: Upload, download, and list files on remote servers
-- **NPX or Docker**: Easy installation via npx or Docker
+An MCP server that gives Claude Code persistent SSH connections. Instead of opening and closing connections for every command, connections stay alive for 10 minutes—making remote server management fast and seamless.
+
+**Part of the [Claude Code Plugin Marketplace](https://github.com/EricGrill/agents-skills-plugins)** — discover more plugins, agents, and skills for Claude Code.
+
+---
 
 ## Quick Start
 
@@ -27,11 +44,13 @@ docker run -it --rm \
   mcp-multi-agent-ssh
 ```
 
+---
+
 ## Claude Code Setup
 
-Add to your Claude Code MCP configuration (`~/.claude/claude_desktop_config.json`):
+Add to your Claude Code MCP configuration:
 
-### NPX Method
+**NPX Method:**
 
 ```json
 {
@@ -47,7 +66,7 @@ Add to your Claude Code MCP configuration (`~/.claude/claude_desktop_config.json
 }
 ```
 
-### Docker Method
+**Docker Method:**
 
 ```json
 {
@@ -68,7 +87,21 @@ Add to your Claude Code MCP configuration (`~/.claude/claude_desktop_config.json
 }
 ```
 
-## Tools Reference
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Persistent Connections** | SSH connections stay open for 10 minutes of inactivity |
+| **Encrypted Credentials** | Per-host credentials stored with AES-256-GCM encryption |
+| **Auto-Reconnect** | Transparently reconnects when connections expire or drop |
+| **SFTP Support** | Upload, download, and list files on remote servers |
+| **Host-Based Auth** | Credentials automatically matched by hostname |
+
+---
+
+## Tools
 
 ### Connection Management
 
@@ -99,6 +132,8 @@ Add to your Claude Code MCP configuration (`~/.claude/claude_desktop_config.json
 | `ssh_list_credentials` | List hosts with stored credentials. |
 | `ssh_delete_credentials` | Remove stored credentials for a host. |
 
+---
+
 ## Examples
 
 ### Connect and Run Commands
@@ -106,15 +141,14 @@ Add to your Claude Code MCP configuration (`~/.claude/claude_desktop_config.json
 ```
 User: Connect to my server at example.com as user "deploy" with password "secret123"
 
-Claude: [calls ssh_connect with host="example.com", username="deploy", password="secret123"]
+Claude: [calls ssh_connect]
 Connected! Credentials saved for future use.
 
 User: What's the disk usage?
 
-Claude: [calls ssh_exec with host="example.com", command="df -h"]
+Claude: [calls ssh_exec with command="df -h"]
 Filesystem      Size  Used Avail Use% Mounted on
 /dev/sda1       100G   45G   55G  45% /
-...
 ```
 
 ### Transfer Files
@@ -122,49 +156,49 @@ Filesystem      Size  Used Avail Use% Mounted on
 ```
 User: Upload my config file to the server
 
-Claude: [calls sftp_upload with host="example.com", local_path="/home/user/config.yml", remote_path="/etc/app/config.yml"]
+Claude: [calls sftp_upload]
 Uploaded 2.3 KB to /etc/app/config.yml
 ```
 
 ### Auto-Reconnect
 
-After 10 minutes of inactivity, connections automatically close. On the next command, the server reconnects using stored credentials:
+After 10 minutes of inactivity, connections automatically close with a notification. The next command reconnects using stored credentials:
 
 ```
 [mcp-multi-agent-ssh] Connection to example.com:22 expired after 10 minutes of inactivity
 
 User: Check the server status
 
-Claude: [calls ssh_exec with host="example.com", command="systemctl status app"]
-[Automatically reconnects using stored credentials]
+Claude: [calls ssh_exec — automatically reconnects]
 ● app.service - My Application
    Active: active (running)
-...
 ```
+
+---
 
 ## Security
 
 ### Credential Storage
 
-- Credentials are stored in `~/.mcp-multi-agent-ssh/credentials.enc`
-- Encrypted with AES-256-GCM
-- Master password derived using PBKDF2 (100,000 iterations)
-- File permissions set to 600 (owner read/write only)
+| Aspect | Implementation |
+|--------|----------------|
+| **Location** | `~/.mcp-multi-agent-ssh/credentials.enc` |
+| **Encryption** | AES-256-GCM |
+| **Key Derivation** | PBKDF2 with 100,000 iterations |
+| **File Permissions** | 600 (owner read/write only) |
 
 ### Master Password
 
-The master password is required to encrypt/decrypt stored credentials:
+The master password encrypts/decrypts stored credentials:
 
-1. **Environment Variable** (recommended for automation):
+1. **Environment Variable** (recommended):
    ```bash
    export MCP_SSH_MASTER_PASSWORD="your-password"
    ```
 
 2. **Interactive Prompt**: If not set, you'll be prompted on first run.
 
-### Host Key Verification
-
-Currently, host key verification is disabled for simplicity. For production use with sensitive servers, consider forking and enabling strict host key checking.
+---
 
 ## Development
 
@@ -182,7 +216,7 @@ cd mcp-multi-agent-ssh
 
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+source venv/bin/activate
 
 # Install in development mode
 pip install -e ".[dev]"
@@ -211,25 +245,28 @@ mcp-multi-agent-ssh/
 └── README.md
 ```
 
+---
+
 ## Troubleshooting
 
-### "Master password required" error
+| Issue | Solution |
+|-------|----------|
+| **"Master password required"** | Set `MCP_SSH_MASTER_PASSWORD` environment variable |
+| **"Python 3.10+ not found"** | Install Python 3.10+ from https://www.python.org/ |
+| **Connection timeouts** | Check network, verify port (default: 22), check firewall |
+| **"Failed to decrypt credentials"** | Wrong password. Delete `~/.mcp-multi-agent-ssh/credentials.enc` and `salt` to reset |
 
-Set the `MCP_SSH_MASTER_PASSWORD` environment variable or run interactively.
+---
 
-### "Python 3.10+ not found"
+## Related
 
-Install Python 3.10 or later from https://www.python.org/
+**[Claude Code Plugin Marketplace](https://github.com/EricGrill/agents-skills-plugins)** — Discover 40+ plugins, 70+ agents, and 110+ skills for Claude Code including:
 
-### Connection timeouts
+- **superpowers** — TDD, debugging, code review skills
+- **python-development** — Django, FastAPI, async Python
+- **llm-application-dev** — RAG, embeddings, LangChain
 
-- Check network connectivity to the SSH server
-- Verify the port is correct (default: 22)
-- Ensure firewall rules allow SSH connections
-
-### "Failed to decrypt credentials"
-
-This usually means the master password is incorrect. If you've forgotten it, delete `~/.mcp-multi-agent-ssh/credentials.enc` and `~/.mcp-multi-agent-ssh/salt` to start fresh (you'll need to re-enter all credentials).
+---
 
 ## License
 
